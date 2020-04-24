@@ -74,5 +74,4 @@ class Dataloader(object):
         return len(self._dataset)
 
 if __name__ == '__main__':
-    d = Dataloader('/Users/krishneelchaudhary/Downloads/facades/train/')
-    d(10)
+    d = Dataloader('../')

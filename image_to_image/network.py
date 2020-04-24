@@ -136,7 +136,7 @@ class PatchGAN(object):
     def generator_loss(self, generated, gen_out, target):
         gan_loss = self._entropy(tf.ones_like(generated), generated)
         l1_loss = tf.reduce_mean(tf.abs(target - gen_out))
-        total_gen_loss = gan_loss + (lambda_val * l1_loss)
+        total_gen_loss = gan_loss + (self._lambda * l1_loss)
         return total_gen_loss, gan_loss, l1_loss
 
     @tf.function

@@ -22,10 +22,10 @@ class Trainer(PatchGAN):
         train_dir = osp.join(dataset_dir, 'train')
         val_dir = osp.join(dataset_dir, 'val')
         input_shape = (256, 256, 3)
-        train_dl = Dataloader(train_dir, input_shape=input_shape)
-        val_dl = Dataloader(val_dir, input_shape=input_shape)
+        self.train_dl = Dataloader(train_dir, input_shape=input_shape)
+        self.val_dl = Dataloader(val_dir, input_shape=input_shape)
 
-        print([train_dl.size, val_dl.size])
+        print([self.train_dl.size, self.val_dl.size])
         
         # logging directory
         assert osp.isdir(log_path), 'Invalid log directory'
@@ -38,9 +38,12 @@ class Trainer(PatchGAN):
     def fit(self):
 
         for epoch in trange(self._epochs, desc='PatchGAN'):
-            input_image = 1
-            target = 1
-            losses = self.train_step(input_image, target, epoch=epoch)
+            im_rgb, im_lab = self.train_dl()
+
+            im_rgb = tf.expand_dims(im_rgb, axis=0)
+            im_lab = tf.expand_dims(im_lab, axis=0)
+            losses = self.train_step(im_lab, im_rgb, epoch=epoch)
+            print(losses)
             
 
 if __name__ == '__main__':
@@ -53,4 +56,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     trainer = Trainer(args.dataset, args.log_dir, args.epochs)
-    # trainer.fit()
+    trainer.fit()
