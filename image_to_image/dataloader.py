@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 def is_valid_dir(directory):
     assert osp.isdir(directory),\
-      f'Invalid dataset directory {directory}'
+        'Invalid dataset directory: {}'.format(directory)
 
 
 def read_dir(directory):
@@ -27,7 +27,7 @@ class Dataloader(object):
         self._input_shape = input_shape
 
     def __call__(self, index=None):
-        index = randint(0, len(self._dataset)) \
+        index = randint(0, len(self._dataset)-1) \
           if index is None else index
         im_rgb, im_lab = self.randomize(*self.load(index=index))
         im_rgb = self.normalize(im_rgb)

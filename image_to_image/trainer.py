@@ -29,23 +29,45 @@ class Trainer(PatchGAN):
         
         # logging directory
         assert osp.isdir(log_path), 'Invalid log directory'
-        log_dir = osp.join(log_path, get_name())
-        os.mkdir(log_dir)
-        print(f'Logging path {log_dir}')
+        self.log_dir = osp.join(log_path, get_name())
+        os.mkdir(self.log_dir)
         
         self._epochs = epochs
+
+        self._summary = tf.summary.create_file_writer(self.log_dir)
+        self._checkpoint = tf.train.Checkpoint(
+            generator_optimizer=self.gen_optimizer,
+            discriminator_optimizer=self.disc_optimizer,
+            generator=self.generator,
+            discriminator=self.discriminator)
         
     def fit(self):
-
+        checkpoint_prefix = osp.join(self.log_dir, 'checkpoint')
+        iter_per_epoch = 500
         for epoch in trange(self._epochs, desc='PatchGAN'):
-            im_rgb, im_lab = self.train_dl()
+            for i in trange(iter_per_epoch, desc='iteration'):
+                im_rgb, im_lab = self.train_dl()
+                
+                im_rgb = tf.expand_dims(im_rgb, axis=0)
+                im_lab = tf.expand_dims(im_lab, axis=0)
+                gen_losses, disc_loss = self.train_step(
+                    im_lab, im_rgb, epoch=epoch)
 
-            im_rgb = tf.expand_dims(im_rgb, axis=0)
-            im_lab = tf.expand_dims(im_lab, axis=0)
-            losses = self.train_step(im_lab, im_rgb, epoch=epoch)
-            print(losses)
-            
+                with self._summary.as_default():
+                    tf.summary.scalar(
+                        'gen_total_loss', gen_losses[0], step=epoch)
+                    tf.summary.scalar(
+                        'gen_gan_loss', gen_losses[1], step=epoch)
+                    tf.summary.scalar(
+                        'gen_l1_loss', gen_losses[2], step=epoch)
+                    tf.summary.scalar(
+                        'disc_loss', disc_loss, step=epoch)
 
+            if (epoch + 1) % 20 == 0:
+                self._checkpoint.save(file_prefix=checkpoint_prefix)            
+        self._checkpoint.save(file_prefix=checkpoint_prefix)
+        
+                
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
