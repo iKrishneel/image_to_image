@@ -17,6 +17,7 @@ install_requires = [
     'matplotlib>=2.1.2',
     'keras',
     'tensorflow',
+    'tqdm',
 ]
 
 
