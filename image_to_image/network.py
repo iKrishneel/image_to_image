@@ -7,7 +7,7 @@ def conv(batch_norm=True, **kwargs):
     slope = kwargs.get('slope', 0.2)
     seq = K.Sequential()
     seq.add(K.layers.Conv2D(**kwargs))
-        
+    
     if batch_norm:
         seq.add(K.layers.BatchNormalization())
         seq.add(K.layers.LeakyReLU(slope))
@@ -46,7 +46,7 @@ class Generator(K.Model):
         self.encoders = \
           [conv(batch_norm=bn, filters=fsize,
                 kernel_size=(4, 4), strides=2,
-                padding='same', name=f'conv{i+1}')
+                padding='same', name='conv{}'.format(i+1))
            for i, (fsize, ksize, s, bn) in enumerate(filter_sizes)]
         
         dfilter_sizes = [[512, [4, 4], 2, True],
@@ -63,7 +63,7 @@ class Generator(K.Model):
           [deconv(use_dropout=do, filters=fsize, kernel_size=ksize,
                   strides=s, padding='same', use_bias=False,
                   kernel_initializer=initializer,
-                  name=f'deconv{i+1}')
+                  name='deconv{}'.format(i+1))
            for i, (fsize, ksize, s, do) in enumerate(dfilter_sizes)]
 
         self.concate = K.layers.Concatenate()
@@ -81,7 +81,6 @@ class Generator(K.Model):
 
         for decoder, skip in zip(self.decoders, skips):
             x = self.concate([decoder(x), skip])
-            # x = K.layers.Concatenate()([decoder(x), skip])
         return self.top(x)
         
 
@@ -98,11 +97,10 @@ class Discriminator(K.Model):
         self.encoders = \
           [conv(batch_norm=bn, filters=fsize, kernel_size=(4, 4),
                 kernel_initializer=initializer,
-                strides=s,padding='same', name=f'conv{i+1}')
+                strides=s,padding='same', name='conv{}'.format(i+1))
            for i, (fsize, ksize, s, bn) in enumerate(filter_sizes)]
         
         self.concate = K.layers.Concatenate()
-
         self.classifier = K.layers.Conv2D(
             filters=1, kernel_size=(4, 4), padding='same')
         
@@ -120,7 +118,7 @@ class PatchGAN(object):
 
         self.generator = Generator()
         self.discriminator = Discriminator()
-
+        
         self.gen_optimizer = K.optimizers.Adam(2e-4, beta_1=0.5)
         self.disc_optimizer = K.optimizers.Adam(2e-4, beta_1=0.5)
         
@@ -139,7 +137,7 @@ class PatchGAN(object):
         total_gen_loss = gan_loss + (self._lambda * l1_loss)
         return total_gen_loss, gan_loss, l1_loss
 
-    @tf.function
+    # @tf.function
     def train_step(self, input_image, target, epoch):
         with tf.GradientTape() as gen_tape,\
             tf.GradientTape() as disc_tape:
@@ -151,7 +149,6 @@ class PatchGAN(object):
 
             gen_losses = self.generator_loss(
                 dgen_output, gen_output, target)
-            # gen_total_loss, gen_gan_loss, gen_l1_loss = gen_losses
             disc_loss = self.discriminator_loss(dreal_output, dgen_output)
 
             generator_gradients = gen_tape.gradient(
